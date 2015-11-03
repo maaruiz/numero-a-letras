@@ -159,6 +159,8 @@ def to_word(number, mi_moneda=None):
     Examples:
         >>> number_words(53625999567)
         'Cincuenta Y Tres Mil Seiscientos Venticinco Millones Novecientos Noventa Y Nueve Mil Quinientos Sesenta Y Siete'
+    
+        >>> 
     """
     if mi_moneda != None:
         try:
@@ -171,9 +173,12 @@ def to_word(number, mi_moneda=None):
             return "Tipo de moneda inválida"
     else:
         moneda = ""
-
+    #recoger decimales
     human_readable = []
-    num_units = format(number,',').split(',')
+    human_readable_decimals = []
+    num_decimals ='{:,.2f}'.format(number).split('.')
+    num_units = num_decimals[0].split(',')
+    num_decimals = num_decimals[1].split(',')
     #print num_units
     for i,n in enumerate(num_units):
         if int(n) != 0:
@@ -181,6 +186,12 @@ def to_word(number, mi_moneda=None):
             units = UNITS[len(num_units)-i-1][0 if int(n) == 1 else 1]
             human_readable.append([words,units])
 
+    for i,n in enumerate(num_decimals):
+        if int(n) != 0:
+            words = hundreds_word(int(n))
+            units = UNITS[len(num_decimals)-i-1][0 if int(n) == 1 else 1]
+            human_readable_decimals.append([words,units])
+            
     #filtrar MIL MILLONES - MILLONES -> MIL - MILLONES
     for i,item in enumerate(human_readable):
         try:
@@ -190,6 +201,20 @@ def to_word(number, mi_moneda=None):
             pass
     human_readable = [item for sublist in human_readable for item in sublist]
     human_readable.append(moneda)
-    return ' '.join(human_readable).replace('  ',' ').title().strip()
+    
+    for i,item in enumerate(human_readable_decimals):
+        try:
+            if human_readable_decimals[i][1].find(human_readable_decimals[i+1][1]):
+                human_readable_decimals[i][1] = human_readable_decimals[i][1].replace(human_readable_decimals[i+1][1],'')
+        except IndexError:
+            pass
+    human_readable_decimals = [item for sublist in human_readable_decimals for item in sublist]
+    human_readable_decimals.append(u'cntms')
+    
+    sentence = ' '.join(human_readable).replace('  ',' ').title().strip()
+    if sentence[0:len('un mil')] == 'Un Mil':
+        sentence = 'Mil' + sentence[len('Un Mil'):]
+    sentence = sentence + ' con ' + ' '.join(human_readable_decimals).replace('  ',' ').title().strip()
+    return sentence
 
 
